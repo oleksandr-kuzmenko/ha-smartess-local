@@ -1,0 +1,69 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Connect your inverter",
+        "description": "Enter the inverter dongle IP and the Home Assistant LAN IP reachable by the dongle. TCP port 8899 must be free. Stop other local clients first.",
+        "data": {
+          "host": "Inverter IP address",
+          "local_ip": "Home Assistant LAN IP address"
+        }
+      },
+      "reconfigure": {
+        "title": "Connect your inverter",
+        "description": "Enter the inverter dongle IP and the Home Assistant LAN IP reachable by the dongle. TCP port 8899 must be free. Stop other local clients first.",
+        "data": {
+          "host": "Inverter IP address",
+          "local_ip": "Home Assistant LAN IP address"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Cannot read the inverter. Check both IP addresses and TCP port 8899.",
+      "invalid_ip": "Enter valid LAN IPv4 addresses."
+    },
+    "abort": {
+      "single_instance_allowed": "Only one inverter is supported.",
+      "reconfigure_successful": "Configuration updated."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "battery_percentage": {
+        "name": "Battery charge"
+      },
+      "working_mode": {
+        "name": "Working mode",
+        "state": {
+          "power_on": "Power on",
+          "standby": "Standby",
+          "mains": "Mains",
+          "off_grid": "Off grid",
+          "bypass": "Bypass",
+          "charging": "Charging",
+          "fault": "Fault"
+        }
+      },
+      "output_power": {
+        "name": "Load power"
+      },
+      "battery_power": {
+        "name": "Battery power"
+      },
+      "battery_voltage": {
+        "name": "Battery voltage"
+      },
+      "grid_voltage": {
+        "name": "Grid voltage"
+      }
+    },
+    "binary_sensor": {
+      "grid_present": {
+        "name": "Grid present"
+      },
+      "battery_discharging": {
+        "name": "Battery discharging"
+      }
+    }
+  }
+}

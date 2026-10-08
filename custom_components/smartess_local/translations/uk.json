@@ -1,0 +1,69 @@
+{
+  "config": {
+    "step": {
+      "user": {
+        "title": "Підключення інвертора",
+        "description": "Вкажіть IP Wi-Fi донгла та LAN IP Home Assistant, доступний донглу. TCP-порт 8899 має бути вільним. Зупиніть інші локальні клієнти.",
+        "data": {
+          "host": "IP-адреса інвертора",
+          "local_ip": "LAN IP-адреса Home Assistant"
+        }
+      },
+      "reconfigure": {
+        "title": "Підключення інвертора",
+        "description": "Вкажіть IP Wi-Fi донгла та LAN IP Home Assistant, доступний донглу. TCP-порт 8899 має бути вільним. Зупиніть інші локальні клієнти.",
+        "data": {
+          "host": "IP-адреса інвертора",
+          "local_ip": "LAN IP-адреса Home Assistant"
+        }
+      }
+    },
+    "error": {
+      "cannot_connect": "Не вдалося прочитати інвертор. Перевірте IP-адреси та доступність TCP-порту 8899.",
+      "invalid_ip": "Вкажіть коректні LAN IPv4-адреси."
+    },
+    "abort": {
+      "single_instance_allowed": "Підтримується один інвертор.",
+      "reconfigure_successful": "Налаштування оновлено."
+    }
+  },
+  "entity": {
+    "sensor": {
+      "battery_percentage": {
+        "name": "Заряд батареї"
+      },
+      "working_mode": {
+        "name": "Режим роботи",
+        "state": {
+          "power_on": "Увімкнення",
+          "standby": "Очікування",
+          "mains": "Мережа",
+          "off_grid": "Автономний",
+          "bypass": "Байпас",
+          "charging": "Заряджання",
+          "fault": "Аварія"
+        }
+      },
+      "output_power": {
+        "name": "Потужність навантаження"
+      },
+      "battery_power": {
+        "name": "Потужність батареї"
+      },
+      "battery_voltage": {
+        "name": "Напруга батареї"
+      },
+      "grid_voltage": {
+        "name": "Напруга мережі"
+      }
+    },
+    "binary_sensor": {
+      "grid_present": {
+        "name": "Мережа присутня"
+      },
+      "battery_discharging": {
+        "name": "Батарея розряджається"
+      }
+    }
+  }
+}

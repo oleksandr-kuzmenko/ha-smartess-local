@@ -1,0 +1,20 @@
+{
+  "domain": "smartess_local",
+  "name": "SmartESS Local",
+  "codeowners": [
+    "@oleksandr-kuzmenko"
+  ],
+  "config_flow": true,
+  "single_config_entry": true,
+  "documentation": "https://github.com/oleksandr-kuzmenko/ha-smartess-local",
+  "integration_type": "device",
+  "iot_class": "local_polling",
+  "loggers": [
+    "smartess_local"
+  ],
+  "requirements": [
+    "smartess-local @ https://github.com/oleksandr-kuzmenko/smartess-local/archive/7867beca9460b5e1cba098b446bc4a3424655089.zip"
+  ],
+  "version": "0.1.0",
+  "issue_tracker": "https://github.com/oleksandr-kuzmenko/ha-smartess-local/issues"
+}
