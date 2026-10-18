@@ -15,6 +15,8 @@ from .const import CONF_LOCAL_IP, DOMAIN, UPDATE_INTERVAL
 
 _LOGGER = logging.getLogger(__name__)
 CONNECTION_ERRORS = (InverterError, OSError, asyncio.IncompleteReadError, ValueError)
+READ_ATTEMPTS = 3
+RETRY_DELAY = 2
 
 
 class SmartessCoordinator(DataUpdateCoordinator[InverterState]):
@@ -25,10 +27,21 @@ class SmartessCoordinator(DataUpdateCoordinator[InverterState]):
         self.connection = Connection(entry.data[CONF_HOST], entry.data[CONF_LOCAL_IP])
 
     async def _async_update_data(self) -> InverterState:
-        try:
-            return await self.connection.async_read()
-        except CONNECTION_ERRORS as exc:
-            raise UpdateFailed(f"{type(exc).__name__}: {exc}") from exc
+        for attempt in range(1, READ_ATTEMPTS + 1):
+            try:
+                return await self.connection.async_read()
+            except CONNECTION_ERRORS as exc:
+                if attempt == READ_ATTEMPTS:
+                    raise UpdateFailed(f"{type(exc).__name__}: {exc}") from exc
+                _LOGGER.debug(
+                    "Inverter read failed (%s/%s), retrying: %s: %s",
+                    attempt,
+                    READ_ATTEMPTS,
+                    type(exc).__name__,
+                    exc,
+                )
+                await asyncio.sleep(RETRY_DELAY)
+        raise AssertionError("No inverter read attempted")
 
     async def async_shutdown(self) -> None:
         await super().async_shutdown()

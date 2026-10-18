@@ -1,7 +1,10 @@
+import asyncio
 from dataclasses import replace
 
+import pytest
 from homeassistant.config_entries import ConfigEntryState
 from homeassistant.helpers import entity_registry as er
+from smartess_local.inverter import InverterError
 
 
 async def setup(hass, entry):
@@ -36,11 +39,11 @@ async def test_failed_read_marks_all_entities_unavailable_and_reconnects(hass, e
     await coordinator.async_refresh()
     await hass.async_block_till_done()
     assert all(hass.states.get(entity).state == "unavailable" for entity in entities.values())
-    inverter.return_value.__aexit__.assert_awaited_once()
+    assert inverter.return_value.__aexit__.await_count == 3
     inverter.return_value.read.side_effect = None
     await coordinator.async_refresh()
     await hass.async_block_till_done()
-    assert inverter.call_count == 2
+    assert inverter.call_count == 4
     assert hass.states.get(entities["battery_percentage"]).state == "96"
     await hass.config_entries.async_unload(entry.entry_id)
 
@@ -49,7 +52,8 @@ async def test_initial_failure_retries_setup_and_closes_client(hass, entry, inve
     inverter.return_value.__aenter__.side_effect = TimeoutError()
     assert not await hass.config_entries.async_setup(entry.entry_id)
     assert entry.state is ConfigEntryState.SETUP_RETRY
-    inverter.return_value.__aexit__.assert_awaited_once()
+    assert inverter.call_count == 3
+    assert inverter.return_value.__aexit__.await_count == 3
 
 
 async def test_invalid_soc_is_not_published(hass, entry, inverter, snapshot):
@@ -110,4 +114,50 @@ async def test_binary_thresholds(hass, entry, inverter, snapshot):
         await hass.async_block_till_done()
         assert hass.states.get(entities["grid_present"]).state == grid
         assert hass.states.get(entities["battery_discharging"]).state == discharge
+    await hass.config_entries.async_unload(entry.entry_id)
+
+
+@pytest.mark.parametrize("failures", [1, 2])
+@pytest.mark.parametrize("error", [TimeoutError, InverterError, ValueError])
+async def test_transient_failure_recovers_without_unavailable(
+    hass, entry, inverter, snapshot, failures, error
+):
+    entities = await setup(hass, entry)
+    inverter.return_value.read.side_effect = [error("bad frame")] * failures + [snapshot]
+    observed = []
+    unsubscribe = hass.bus.async_listen(
+        "state_changed",
+        lambda event: observed.append(event.data.get("new_state")),
+    )
+    await entry.runtime_data.async_refresh()
+    await hass.async_block_till_done()
+    unsubscribe()
+    assert inverter.call_count == failures + 1
+    assert inverter.return_value.__aexit__.await_count == failures
+    assert hass.states.get(entities["battery_percentage"]).state == "96"
+    assert not any(
+        state and state.entity_id in entities.values() and state.state == "unavailable"
+        for state in observed
+    )
+    await hass.config_entries.async_unload(entry.entry_id)
+
+
+async def test_cancelled_retry_does_not_open_another_connection(
+    hass, entry, inverter, monkeypatch
+):
+    from custom_components.smartess_local import coordinator
+
+    await setup(hass, entry)
+    inverter.return_value.read.side_effect = TimeoutError()
+    monkeypatch.setattr(coordinator, "RETRY_DELAY", 3600)
+    task = asyncio.create_task(entry.runtime_data._async_update_data())
+    for _ in range(20):
+        await asyncio.sleep(0)
+        if inverter.return_value.__aexit__.await_count:
+            break
+    assert inverter.return_value.__aexit__.await_count == 1
+    task.cancel()
+    with pytest.raises(asyncio.CancelledError):
+        await task
+    assert inverter.call_count == 1
     await hass.config_entries.async_unload(entry.entry_id)

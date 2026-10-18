@@ -49,3 +49,8 @@ def entry(hass):
     )
     entry.add_to_hass(hass)
     return entry
+
+
+@pytest.fixture(autouse=True)
+def no_retry_delay(monkeypatch):
+    monkeypatch.setattr("custom_components.smartess_local.coordinator.RETRY_DELAY", 0)
